@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прогноз спроса</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Прогноз спроса</h1>
+    <p class="subtitle">Выберите горизонт и товары для прогноза</p>
+  </header>
+
+  {% if error %}
+  <div class="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="/predict" id="mainForm" onsubmit="showLoader()">
+
+    <!-- Шаг 1: горизонт -->
+    <section class="card">
+      <h2>1. Горизонт прогноза</h2>
+      <div class="horizon-grid">
+        <label class="horizon-card">
+          <input type="radio" name="horizon" value="week" checked>
+          <div class="horizon-body">
+            <span class="horizon-icon">📅</span>
+            <strong>1 неделя</strong>
+            <small>Краткосрочный прогноз</small>
+          </div>
+        </label>
+        <label class="horizon-card">
+          <input type="radio" name="horizon" value="month">
+          <div class="horizon-body">
+            <span class="horizon-icon">📆</span>
+            <strong>1 месяц</strong>
+            <small>Среднесрочный прогноз</small>
+          </div>
+        </label>
+        <label class="horizon-card">
+          <input type="radio" name="horizon" value="3month">
+          <div class="horizon-body">
+            <span class="horizon-icon">🗓</span>
+            <strong>3 месяца</strong>
+            <small>Квартальный прогноз</small>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- Шаг 2: фильтры -->
+    <section class="card">
+      <h2>2. Выбор товаров</h2>
+      <p class="hint">Оставьте все поля пустыми — прогноз будет по всем товарам</p>
+
+      <div class="filters-grid">
+
+        <!-- Папка1 -->
+        <div class="filter-group">
+          <label>Категория (Папка1)</label>
+          <div class="multiselect-box" id="papa1Box">
+            {% for p in papa1_opts %}
+            <label class="check-item">
+              <input type="checkbox" name="papa1" value="{{ p }}" onchange="updatePapa2()">
+              {{ p }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Папка2 -->
+        <div class="filter-group">
+          <label>Подкатегория (Папка2) <small>фильтруется по Папка1</small></label>
+          <div class="multiselect-box" id="papa2Box">
+            <span class="hint-empty">Сначала выберите категорию</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>Поиск по названию</label>
+          <input type="text" name="name_search" placeholder="Например: удобрение" class="text-input">
+        </div>
+        <div class="filter-group">
+          <label>Коды товаров (через запятую)</label>
+          <input type="text" name="ids" placeholder="1234, 5678, ..." class="text-input">
+        </div>
+      </div>
+    </section>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-primary" id="submitBtn">
+        Сделать прогноз
+      </button>
+      <span class="loader" id="loader" style="display:none">
+        ⏳ Считаем прогноз, подождите...
+      </span>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+const papa2map = {{ papa2_json | safe }};
+
+function updatePapa2() {
+  const checked = [...document.querySelectorAll('input[name="papa1"]:checked')].map(e => e.value);
+  console.log('checked:', checked);
+  console.log('papa2map keys (first 3):', Object.keys(papa2map).slice(0, 3));
+  if (checked.length > 0) console.log('lookup result:', papa2map[checked[0]]);
+  const box = document.getElementById('papa2Box');
+
+  if (checked.length === 0) {
+    box.innerHTML = '<span class="hint-empty">Сначала выберите категорию</span>';
+    return;
+  }
+
+  let opts = new Set();
+  checked.forEach(p => (papa2map[p] || []).forEach(v => opts.add(v)));
+
+  if (opts.size === 0) {
+    box.innerHTML = '<span class="hint-empty">Нет подкатегорий</span>';
+    return;
+  }
+
+  box.innerHTML = [...opts].sort().map(v =>
+    `<label class="check-item"><input type="checkbox" name="papa2" value="${v}"> ${v}</label>`
+  ).join('');
+}
+
+function showLoader() {
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('loader').style.display = 'inline';
+}
+</script>
+</body>
+</html>

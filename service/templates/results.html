@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Результаты — {{ period }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container wide">
+
+  <header>
+    <a href="/" class="back-link">← Новый прогноз</a>
+    <h1>Заявка на закупку</h1>
+    <div class="meta-row">
+      <span class="badge">{{ horizon_label }}</span>
+      <span class="badge accent">{{ period }}</span>
+      <span class="meta-text">{{ count }} товаров · итого {{ total }} шт.</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input type="text" id="searchBox" placeholder="Поиск по названию..." class="text-input search-input" oninput="filterTable()">
+    <button class="btn-primary" onclick="exportExcel()">Скачать Excel</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)" class="sortable">Код ↕</th>
+          <th onclick="sortTable(1)" class="sortable">Название ↕</th>
+          <th onclick="sortTable(2)" class="sortable">Категория ↕</th>
+          <th onclick="sortTable(3)" class="sortable">Подкатегория ↕</th>
+          <th onclick="sortTable(4)" class="sortable">Прогноз (шт) ↕</th>
+          <th>К заказу (шт)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr
+          data-code="{{ row.КодТовара }}"
+          data-name="{{ row.Номенклатура }}"
+          data-papa1="{{ row.Папка1 }}"
+          data-papa2="{{ row.Папка2 or '' }}"
+          data-forecast="{{ row.Прогноз }}"
+        >
+          <td class="code-cell">{{ row.КодТовара }}</td>
+          <td class="name-cell">{{ row.Номенклатура }}</td>
+          <td>{{ row.Папка1 }}</td>
+          <td>{{ row.Папка2 or '—' }}</td>
+          <td class="num-cell">{{ row.Прогноз }}</td>
+          <td>
+            <input
+              type="number"
+              class="qty-input"
+              value="{{ row.Прогноз }}"
+              min="0"
+              step="1"
+              onchange="updateTotal()"
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer-bar">
+    <span id="totalLabel">Итого к заказу: <strong id="totalQty">{{ total }}</strong> шт.</span>
+    <button class="btn-primary" onclick="exportExcel()">Скачать Excel</button>
+  </div>
+
+</div>
+
+<script>
+const PERIOD  = "{{ period }}";
+const HORIZON = "{{ horizon }}";
+
+// Сортировка
+let sortDir = {};
+function sortTable(col) {
+  const tb = document.getElementById('resultsTable').tBodies[0];
+  const rows = [...tb.rows];
+  const asc  = (sortDir[col] = !sortDir[col]);
+  rows.sort((a, b) => {
+    const va = a.cells[col].innerText.trim();
+    const vb = b.cells[col].innerText.trim();
+    const na = parseFloat(va), nb = parseFloat(vb);
+    if (!isNaN(na) && !isNaN(nb)) return asc ? na - nb : nb - na;
+    return asc ? va.localeCompare(vb, 'ru') : vb.localeCompare(va, 'ru');
+  });
+  rows.forEach(r => tb.appendChild(r));
+}
+
+// Поиск
+function filterTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  document.querySelectorAll('#resultsTable tbody tr').forEach(tr => {
+    const name = tr.dataset.name.toLowerCase();
+    const code = tr.dataset.code.toLowerCase();
+    tr.style.display = (name.includes(q) || code.includes(q)) ? '' : 'none';
+  });
+}
+
+// Пересчёт итога
+function updateTotal() {
+  let sum = 0;
+  document.querySelectorAll('.qty-input').forEach(inp => {
+    const v = parseInt(inp.value) || 0;
+    sum += v;
+  });
+  document.getElementById('totalQty').textContent = sum;
+}
+
+// Экспорт в Excel
+async function exportExcel() {
+  const rows = [];
+  document.querySelectorAll('#resultsTable tbody tr').forEach(tr => {
+    if (tr.style.display === 'none') return;
+    rows.push({
+      КодТовара:   tr.dataset.code,
+      Номенклатура: tr.dataset.name,
+      Папка1:       tr.dataset.papa1,
+      Папка2:       tr.dataset.papa2,
+      Прогноз:      parseInt(tr.dataset.forecast) || 0,
+      к_заказу:     parseInt(tr.querySelector('.qty-input').value) || 0,
+    });
+  });
+
+  const resp = await fetch('/export', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({rows, period: PERIOD, horizon: HORIZON}),
+  });
+
+  if (!resp.ok) { alert('Ошибка экспорта'); return; }
+  const blob = await resp.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `zakupka_${PERIOD.replace(/ /g,'_')}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

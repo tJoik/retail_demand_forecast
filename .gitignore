@@ -1,0 +1,42 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.python-version
+
+# ── Jupyter ──
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/
+
+# ── Данные компании (не публикуются, доступ по запросу) ──
+features/*.csv
+export_from_1c/
+1c_files/
+tmp_parts/
+nomenclature_import/nomenclature.csv
+nomenclature_import/nomenclature_with_supplier.csv
+nomenclature_import/suppliers.txt
+nomenclature_import/suppliers_with_metrics.csv
+
+# ── Артефакты моделей ──
+models/*.pkl
+service/precomputed/*.csv
+
+# ── Служебные ──
+*.log
+*.tmp
+*.bak
+
+# ── ОС / IDE ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
