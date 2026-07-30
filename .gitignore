@@ -20,10 +20,6 @@ features/*.csv
 export_from_1c/
 1c_files/
 tmp_parts/
-nomenclature_import/nomenclature.csv
-nomenclature_import/nomenclature_with_supplier.csv
-nomenclature_import/suppliers.txt
-nomenclature_import/suppliers_with_metrics.csv
 
 # ── Артефакты моделей ──
 models/*.pkl

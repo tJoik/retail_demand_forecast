@@ -19,7 +19,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 BASE = Path(__file__).parent.parent
 DATA = BASE / "features" / "features_one_week.csv"
-NOM  = BASE / "nomenclature_import" / "nomenclature_with_supplier.csv"
+NOM  = BASE / "features" / "nomenclature_with_supplier.csv"
 OUT  = Path(__file__).parent / "precomputed"
 
 
