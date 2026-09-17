@@ -1,10 +1,10 @@
 # Дипломная работа: Сервис прогнозирования спроса для частного розничного магазина
 
-Пайплайн прогнозирования недельных, месячных и квартальных продаж для розничного магазина. От выгрузки из 1С до FastAPI-сервиса с UI, откуда можно получить прогноз в разрезе категорий и выгрузить заявку на закупку в Excel.
+Пайплайн прогнозирования недельных, месячных и квартальных продаж для розничного магазина.
 
 ## Стек
 
-- **ML**: XGBoost, scikit-learn Pipeline, TargetEncoder, TimeSeriesSplit, GridSearchCV.
+- **ML**: XGBoost, scikit-learn, TargetEncoder, TimeSeriesSplit, GridSearchCV.
 - **Метрики**: WAPE, R².
 - **Сервис**: FastAPI + Jinja2, экспорт в Excel через openpyxl.
 - **Данные**: 1С COM-коннектор, Open-Meteo API, holidays.
@@ -56,7 +56,7 @@ retail_demand_forecast/
 pip install -r requirements.txt
 ```
 
-При необходимости выгрузить данные из 1С, необходимо раскомментировать `pywin32` в `requirements.txt`. Сработает только в Windows.
+При необходимости выгрузить данные из 1С, необходимо раскомментировать pywin32 в `requirements.txt`. Сработает только в Windows.
 
 ### 2. Данные
 
@@ -96,7 +96,7 @@ python service/run.py            # запуск uvicorn
 
 ## Выбор параметров модели XGboost
 
-GridSearchCV по сетке `n_estimators: [300, 600], max_depth: [4, 6]` с TimeSeriesSplit-3, scoring на CV - WAPE. Лучший результат CV:
+GridSearchCV по сетке n_estimators: [300, 600], max_depth: [4, 6] с TimeSeriesSplit-3, scoring на CV - WAPE. Лучший результат CV:
 
 | Горизонт | n_estimators | max_depth | CV-WAPE |
 |---|---|---|---|
